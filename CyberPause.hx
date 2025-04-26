@@ -49,6 +49,7 @@ function postCreate()
 	members[4].destroy();
 	optionGroup = new FlxTypedGroup();
 	image = new FlxSprite(0, 0);
+	image.antialiasing = true;
 	image.loadGraphic(Paths.image('game/pause/hologram'));
 	image.blend = 9;
 	//image.setGraphicSize(FlxG.width * 1.4, FlxG.height * 1.4);
@@ -57,6 +58,7 @@ function postCreate()
 	add(image);
 
 	fade = new FlxSprite(0, 0);
+	fade.antialiasing = true;
 	fade.loadGraphic(Paths.image('game/pause/fade'));
 	fade.blend = 0;
 	//image.setGraphicSize(FlxG.width * 1.4, FlxG.height * 1.4);
@@ -65,6 +67,7 @@ function postCreate()
 	add(fade);
 
 	fade2 = new FlxSprite(0, 240);
+	fade2.antialiasing = true;
 	fade2.loadGraphic(Paths.image('menus/titlescreen/fade'));
 	fade2.blend = 0;
 	//image.setGraphicSize(FlxG.width * 1.4, FlxG.height * 1.4);
@@ -93,7 +96,9 @@ function postCreate()
 	for(i in 0...optionShit.length)
 	{
 		imgss = new FlxSprite(200 * i,240).loadGraphic(Paths.image("game/pause/" + optionShit[i]));
+		imgss.antialiasing = true;
 		imgss.scrollFactor.set(0, 0);
+		imgss.cameras = [camPause];
 		imgss.ID = i;
 		if(imgss.ID == 0) {
 			imgss.screenCenter(); 
@@ -133,6 +138,7 @@ function postCreate()
 function particle(x:Float, y:Float)
 {
 	pit = new FlxSprite(x,y);
+	pit.antialiasing = true;
 	pit.loadGraphic(Paths.image('game/pause/particle'));
 	lifeTime = FlxG.random.float(0.6, 0.9);
 	decay = FlxG.random.float(0.8, 1);
@@ -229,32 +235,29 @@ function onUpdate(elapsed:Float)
 		}
 	}
 
-	if(glowParticles != null)
+	glowParticles.forEach(function(spr:FlxSprite) {});
+	lifeTime -= FlxG.elapsed;
+	glowParticles.forEach(function(spr:FlxSprite)
 	{
-		glowParticles.forEach(function(spr:FlxSprite) {});
-		lifeTime -= FlxG.elapsed;
-		glowParticles.forEach(function(spr:FlxSprite)
+		if(lifeTime < 0)
 		{
-			if(lifeTime < 0)
+			lifeTime = 0;
+			spr.alpha -= 0.8 * FlxG.elapsed;
+			if(spr.alpha > 0)
 			{
-				lifeTime = 0;
-				spr.alpha -= 0.8 * FlxG.elapsed;
-				if(spr.alpha > 0)
-				{
-					spr.scale.set(originalScale * spr.alpha, originalScale * spr.alpha);
-					floating();
-				}
-
-				if(spr.alpha < 0)
-				{
-					spr.kill();
-					glowParticles.remove(spr, true);
-					spr.destroy();
-					trace('KILL');
-				}
+				spr.scale.set(originalScale * spr.alpha, originalScale * spr.alpha);
+				floating();
 			}
-		});
-	}
+
+			if(spr.alpha < 0)
+			{
+				spr.kill();
+				glowParticles.remove(spr, true);
+				spr.destroy();
+				trace('KILL');
+			}
+		}
+	});
 
 	var lerp = FlxEase.sineOut(curBeat % 1);
 
@@ -368,6 +371,7 @@ function Countdown(swagCounter:Int) {
 	switch(swagCounter) {
 		case 0:
 			three = new FunkinText(0, 0, 0, '3', 72, true);
+			three.antialiasing = true;
 			three.updateHitbox();
 			three.screenCenter();
 			add(three);
@@ -378,6 +382,7 @@ function Countdown(swagCounter:Int) {
 
 		case 1:
 			two = new FunkinText(0, 0, 0, '2', 72, true);
+			two.antialiasing = true;
 			two.updateHitbox();
 			two.screenCenter();
 			add(two);
@@ -388,6 +393,7 @@ function Countdown(swagCounter:Int) {
 
 		case 2:
 			one = new FunkinText(0, 0, 0, '1', 72, true);
+			one.antialiasing = true;
 			one.updateHitbox();
 			one.screenCenter();
 			add(one);
@@ -397,6 +403,7 @@ function Countdown(swagCounter:Int) {
 			});
 		case 3:
 			go = new FunkinText(0, 0, 0, 'GO!', 72, true);
+			go.antialiasing = true;
 			go.updateHitbox();
 			go.screenCenter();
 			add(go);
