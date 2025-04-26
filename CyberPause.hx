@@ -1,16 +1,14 @@
-import funkin.options.OptionsMenu;
-import funkin.game.PlayState;
+import flixel.addons.transition.FlxTransitionableState;
+import flixel.group.FlxTypedGroup;
+import options.OptionsState;
+import backend.Mods;
+import PlayState;
 import openfl.display.BitmapData;
-import openfl.display.ShaderInput;
-import openfl.display.Shader;
-import openfl.filters.ShaderFilter;
-import funkin.backend.shaders.FunkinShader;
 import openfl.utils.Assets;
-import funkin.backend.MusicBeatState;
+import MusicBeatState;
+import StoryMenuState;
+import FreeplayState;
 import Sys;
-//Quit Song imports (Mobile)
-import funkin.editors.charter.Charter;
-import funkin.backend.scripting.events.MenuChangeEvent;
 
 var optionShit = ["resume", "retry", "setting", "home"];
 var imgss:FlxSprite;
@@ -27,61 +25,53 @@ var originalScale:Float = 1;
 var glowParticles:FlxTypedGroup;
 var pit:FlxSprite;
 var select:Bool = false;
+var camPause:FlxCamera;
 
 function postCreate()
 {
-	trace('delete');
-	#if mobile
-	FlxG.mouse.visible = false;
-	#else
 	FlxG.mouse.visible = true;
-	#end
 	for(i in grpMenuShit) {
 		i.visible = false;
 		i.alpha = 0;
-		i.destroy();
 		remove(i);
 	}
+	removeVirtualPad();
+	addVirtualPad("NONE", "B");
 	levelInfo = new FunkinText(130, -10, 0, 'GO', 32);
 	username = new FunkinText(1080, 100, 0, Sys.getEnv("USERNAME"), 22);
 	welcome = new FunkinText(960, 100, 0, "Welcome Back", 22);
-	trace(PlayState.instance.camGame);
 
-	blurShader = new FunkinShader(Assets.getText(Paths.fragShader("blur")));
-	PlayState.instance.camGame.addShader(blurShader);
-	PlayState.instance.camHUD.addShader(blurShader);
-	levelDifficulty = new FunkinText(980, -10 + 32, 0, PlayState.difficulty.toUpperCase(), 32);
+	levelDifficulty = new FunkinText(980, -10 + 32, 0, "Lol", 32);
 	levelInfo.alpha = 0;
 	add(levelInfo);
 	members[2].destroy();
 	members[3].destroy();
+	members[4].destroy();
 	optionGroup = new FlxTypedGroup();
 	image = new FlxSprite(0, 0);
-	image.antialiasing = true;
 	image.loadGraphic(Paths.image('game/pause/hologram'));
 	image.blend = 9;
 	//image.setGraphicSize(FlxG.width * 1.4, FlxG.height * 1.4);
 	image.updateHitbox();
-	image.screenCenter(FlxAxes.XY);
+	image.screenCenter();
 	add(image);
 
 	fade = new FlxSprite(0, 0);
-	fade.antialiasing = true;
 	fade.loadGraphic(Paths.image('game/pause/fade'));
 	fade.blend = 0;
 	//image.setGraphicSize(FlxG.width * 1.4, FlxG.height * 1.4);
 	fade.updateHitbox();
-	fade.screenCenter(FlxAxes.XY);
+	fade.screenCenter();
 	add(fade);
 
 	fade2 = new FlxSprite(0, 240);
-	fade2.antialiasing = true;
 	fade2.loadGraphic(Paths.image('menus/titlescreen/fade'));
 	fade2.blend = 0;
 	//image.setGraphicSize(FlxG.width * 1.4, FlxG.height * 1.4);
-	fade2.screenCenter(FlxAxes.X);
+	fade2.screenCenter();
 	fade2.flipY = true;
 	fade2.alpha = 0.3;
+	fade2.y = 240;
 	fade2.updateHitbox();
 
 	add(fade2);
@@ -103,12 +93,10 @@ function postCreate()
 	for(i in 0...optionShit.length)
 	{
 		imgss = new FlxSprite(200 * i,240).loadGraphic(Paths.image("game/pause/" + optionShit[i]));
-		imgss.antialiasing = true;
 		imgss.scrollFactor.set(0, 0);
-		imgss.cameras = [camPause];
 		imgss.ID = i;
 		if(imgss.ID == 0) {
-			imgss.screenCenter(FlxAxes.X); 
+			imgss.screenCenter(); 
 			imgss.y = 769;  
 		} //512.5 232.5
 		if(imgss.ID == 1) {
@@ -142,15 +130,9 @@ function postCreate()
 	floating();
 }
 
-function create()
-{
-	trace('create');
-}
-
 function particle(x:Float, y:Float)
 {
 	pit = new FlxSprite(x,y);
-	pit.antialiasing = true;
 	pit.loadGraphic(Paths.image('game/pause/particle'));
 	lifeTime = FlxG.random.float(0.6, 0.9);
 	decay = FlxG.random.float(0.8, 1);
@@ -180,16 +162,8 @@ function floating()
 	}
 }
 
-function update(elapsed:Float)
+function onUpdate(elapsed:Float)
 {
-	#if mobile
-	if (touchPad.buttonB.justPressed) {
-		PlayState.resetSongInfos();
-		if (Charter.instance != null) Charter.instance.__clearStatics();
-		CoolUtil.playMenuSong();
-		FlxG.switchState(PlayState.isStoryMode ? new StoryMenuState() : new FreeplayState());
-	}
-	#end
 	__cancelDefault = true;
 
 	/*var damngod = optionGroup.members[3];
@@ -282,9 +256,7 @@ function update(elapsed:Float)
 		});
 	}
 
-
-
-	var lerp = FlxEase.sineOut(curBeatFloat % 1);
+	var lerp = FlxEase.sineOut(curBeat % 1);
 
 	if(controls.ACCEPT)
 	{
@@ -292,12 +264,28 @@ function update(elapsed:Float)
 		selectItem();
 	}
 
-	optionGroup.forEach(function(spr:FlxSprite) {
-		if (FlxG.mouse.overlaps(spr))
-		{
-			changeSelect(spr.ID);
-		}
-	});
+	if(controls.BACK)
+	{
+		PlayState.deathCounter = 0;
+		PlayState.seenCutscene = false;
+
+		Mods.loadTopMod();
+		CustomSwitchState.switchMenus(PlayState.isStoryMode ? 'StoryMenu' : 'Freeplay');
+		FlxG.sound.playMusic(Paths.music('freakyMenu'));
+		PlayState.changedDifficulty = false;
+		PlayState.chartingMode = false;
+		FlxG.camera.followLerp = 0;
+	}
+
+	if(glowParticles != null)
+	{
+		optionGroup.forEach(function(spr:FlxSprite) {
+			if (FlxG.mouse.overlaps(spr))
+			{
+				changeSelect(spr.ID);
+			}
+		});
+	}
 
 
 	for (i in 0...optionGroup.members.length) {
@@ -314,46 +302,47 @@ function update(elapsed:Float)
 	}
 }
 
-function postUpdate(elapsed:Float) {}
-
 function selectItem()
 {
 	switch(curSelected)
 	{
 		case 0:
-		var swagCounter:Int = 0;
-		new FlxTimer().start(0.1, function(tmr:FlxTimer)
-		{
-			new FlxTimer().start(Conductor.crochet / 1000, function(tmr:FlxTimer)
+			var swagCounter:Int = 0;
+			new FlxTimer().start(0.1, function(tmr:FlxTimer)
 			{
-				Countdown(swagCounter++);
-			}, 4);
-		});
-
-		for (i in 0...optionGroup.members.length)
-		{
-			FlxTween.tween(optionGroup.members[0], {y: -111 , alpha:0}, 0.7, {ease: FlxEase.quadIn});
-			FlxTween.tween(optionGroup.members[1], {y: -166, alpha:0}, 0.6, {ease: FlxEase.quadIn});
-			FlxTween.tween(optionGroup.members[2], {y: -232, alpha:0}, 0.8, {ease: FlxEase.quadIn});
-			FlxTween.tween(optionGroup.members[3], {y: -490, alpha:0}, 0.65, {ease: FlxEase.quadIn});
-		}
-
+				new FlxTimer().start(Conductor.crochet / 1000, function(tmr:FlxTimer)
+				{
+					Countdown(swagCounter++);
+					swagCounter += 1;
+				}, 4);
+			});
+	
+			for (i in 0...optionGroup.members.length)
+			{
+				FlxTween.tween(optionGroup.members[0], {y: -111 , alpha:0}, 0.7, {ease: FlxEase.quadIn});
+				FlxTween.tween(optionGroup.members[1], {y: -166, alpha:0}, 0.6, {ease: FlxEase.quadIn});
+				FlxTween.tween(optionGroup.members[2], {y: -232, alpha:0}, 0.8, {ease: FlxEase.quadIn});
+				FlxTween.tween(optionGroup.members[3], {y: -490, alpha:0}, 0.65, {ease: FlxEase.quadIn});
+			}
 		case 1:
-			parentDisabler.reset();
-			PlayState.instance.registerSmoothTransition();
-			FlxG.resetState();
+			substate.restartSong(true);
 		case 2:
-			FlxG.switchState(new OptionsMenu());
+			OptionsState.stateType = 3;
+			PlayState.deathCounter = 0;
+			PlayState.seenCutscene = false;
+			CustomSwitchState.switchMenus('Options');
+			FlxG.sound.playMusic(Paths.music('freakyMenu'));
 		case 3:
-			CoolUtil.playMenuSong();
-			FlxG.switchState(PlayState.isStoryMode ? new StoryMenuState() : new FreeplayState());
-	}
-}
+			PlayState.deathCounter = 0;
+			PlayState.seenCutscene = false;
 
-function selectOption(event:MenuChangeEvent)
-{
-	event.cancelled = true;
-	trace('select');
+			Mods.loadTopMod();
+			CustomSwitchState.switchMenus(PlayState.isStoryMode ? 'StoryMenu' : 'Freeplay');
+			FlxG.sound.playMusic(Paths.music('freakyMenu'));
+			PlayState.changedDifficulty = false;
+			PlayState.chartingMode = false;
+			FlxG.camera.followLerp = 0;
+	}
 }
 
 function changeSelect(huh:Int = 0)
@@ -379,7 +368,6 @@ function Countdown(swagCounter:Int) {
 	switch(swagCounter) {
 		case 0:
 			three = new FunkinText(0, 0, 0, '3', 72, true);
-			three.antialiasing = true;
 			three.updateHitbox();
 			three.screenCenter();
 			add(three);
@@ -390,7 +378,6 @@ function Countdown(swagCounter:Int) {
 
 		case 1:
 			two = new FunkinText(0, 0, 0, '2', 72, true);
-			two.antialiasing = true;
 			two.updateHitbox();
 			two.screenCenter();
 			add(two);
@@ -401,7 +388,6 @@ function Countdown(swagCounter:Int) {
 
 		case 2:
 			one = new FunkinText(0, 0, 0, '1', 72, true);
-			one.antialiasing = true;
 			one.updateHitbox();
 			one.screenCenter();
 			add(one);
@@ -411,7 +397,6 @@ function Countdown(swagCounter:Int) {
 			});
 		case 3:
 			go = new FunkinText(0, 0, 0, 'GO!', 72, true);
-			go.antialiasing = true;
 			go.updateHitbox();
 			go.screenCenter();
 			add(go);
@@ -422,10 +407,6 @@ function Countdown(swagCounter:Int) {
 					go.destroy();
 					remove(go, true);
 					close();
-
-					PlayState.instance.camGame.removeShader(blurShader);
-					PlayState.instance.camHUD.removeShader(blurShader);
-					blurShader = null;
 					trace('remove');
 				}
 			});
