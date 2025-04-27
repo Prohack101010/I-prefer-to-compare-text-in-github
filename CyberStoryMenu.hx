@@ -1,5 +1,30 @@
-import funkin.game.PlayState;
-import funkin.backend.MusicBeatState;
+import options.OptionsState;
+import MusicBeatState;
+import flixel.text.FlxTextBorderStyle;
+import haxe.io.Path;
+import flixel.effects.FlxFlicker;
+import options.OptionsState;
+import MusicBeatState;
+import LoadingState;
+import Highscore;
+import Song;
+import CreditsState;
+import PlayState;
+import flixel.addons.transition.FlxTransitionableState;
+import flixel.group.FlxTypedGroup;
+import options.OptionsState;
+import backend.Mods;
+import PlayState;
+import openfl.display.BitmapData;
+import openfl.utils.Assets;
+import MusicBeatState;
+import StoryMenuState;
+import FreeplayState;
+import Sys;
+import flixel.math.FlxMath;
+import HealthIcon;
+import Difficulty;
+
 var coverart:FlxSprite;
 var storyShit = ["chap1", "chap2", "chap3","chap4", "chap5"];
 var storyGroup:FlxTypedGroup;
@@ -46,7 +71,6 @@ function postCreate()
 	//BF MODE AUTO TO OFF
 	FlxG.save.data.bfmode = false;
 
-
 	fade = new FlxSprite(0, 0);
 	fade.antialiasing = true;
 	fade.loadGraphic(Paths.image('game/pause/fade'));
@@ -58,7 +82,7 @@ function postCreate()
 	}
 	//image.setGraphicSize(FlxG.width * 1.4, FlxG.height * 1.4);
 	fade.updateHitbox();
-	fade.screenCenter(FlxAxes.XY);
+	fade.screenCenter();
 	add(fade);
 
 	fade2 = new FlxSprite(0, 0);
@@ -72,7 +96,7 @@ function postCreate()
 	}
 	fade2.updateHitbox();
 	fade2.setGraphicSize(FlxG.width * 1.2, FlxG.height * 1.2);
-	fade2.screenCenter(FlxAxes.XY);
+	fade2.screenCenter();
 	fade2.alpha = 0.3;
 	add(fade2);
 
@@ -82,7 +106,7 @@ function postCreate()
 	fade.blend = 11;
 	//image.setGraphicSize(FlxG.width * 1.4, FlxG.height * 1.4);
 	fade.updateHitbox();
-	fade.screenCenter(FlxAxes.XY);
+	fade.screenCenter();
 	fade.alpha = 0.1;
 
 	add(fade);
@@ -107,11 +131,11 @@ function postCreate()
 		imgss.updateHitbox();
 		imgss.blend = 11;
 		imgss.alpha = 0;
-		imgss.screenCenter(FlxAxes.Y);
+		imgss.screenCenter();
 		imgss.ID = i;
-		//if(imgss.ID == 0) imgss.screenCenter(FlxAxes.XY); //512.5 232.5
-		//if(imgss.ID == 1) {imgss.screenCenter(FlxAxes.Y); imgss.x = 200; imgss.y +=10;}//200 247
-		//if(imgss.ID == 2) {imgss.screenCenter(FlxAxes.Y); imgss.x = 900;}//900 272
+		//if(imgss.ID == 0) imgss.screenCenter(); //512.5 232.5
+		//if(imgss.ID == 1) {imgss.screenCenter(); imgss.x = 200; imgss.y +=10;}//200 247
+		//if(imgss.ID == 2) {imgss.screenCenter(); imgss.x = 900;}//900 272
 		storyGroup.add(imgss);
 	}
 	scaleOG[0] = imgss.scale.x;
@@ -135,20 +159,20 @@ function postCreate()
 		sideart = new FlxSprite(10 + i).loadGraphic(Paths.image("menus/story/side/" + sideShit[i]));
 		sideart.antialiasing = true;
 		sideart.updateHitbox();
-		sideart.screenCenter(FlxAxes.Y);
+		sideart.screenCenter();
 		sideart.alpha = 0;
 
 		sideart.scale.set(0.4,0.4);
 		sideart.ID = i;
-		if(sideart.ID == 0) {sideart.screenCenter(FlxAxes.XY); sideart.setPosition(-733,sideart.y + FlxG.height);} //-733 -514
-		if(sideart.ID == 1) {sideart.screenCenter(FlxAxes.Y); sideart.setPosition(-14,sideart.y + FlxG.height);} // -14 ,-494
+		if(sideart.ID == 0) {sideart.screenCenter(); sideart.setPosition(-733,sideart.y + FlxG.height);} //-733 -514
+		if(sideart.ID == 1) {sideart.screenCenter(); sideart.setPosition(-14,sideart.y + FlxG.height);} // -14 ,-494
 		sideGroup.add(sideart);
 		//trace(sideart.ID);
 	}
 
 	text = new FunkinText(0,0,0,"PICK A STORY",64);
 	text.antialiasing = true;
-	text.screenCenter(FlxAxes.X);
+	text.screenCenter();
 	text.alpha = 0;
 	text.updateHitbox();
 	add(text);
@@ -156,7 +180,7 @@ function postCreate()
 	chapter = new FunkinText(0,0,0,chname[0],64);
 	chapter.antialiasing = true;
 	if(FlxG.save.data.thaiSub) {chapter.font = Paths.font('thai-font.ttf');}
-	chapter.screenCenter(FlxAxes.X);
+	chapter.screenCenter();
 	chapter.y += 9;
 	chapter.alpha = 0;
 	chapter.y -= FlxG.height;
@@ -167,7 +191,7 @@ function postCreate()
 	desc.antialiasing = true;
 	if(FlxG.save.data.thaiSub) {desc.font = Paths.font('thai-font.ttf');}
 
-	desc.screenCenter(FlxAxes.X);
+	desc.screenCenter();
 	desc.y = 655;
 	desc.alpha = 0;
 	desc.updateHitbox();
@@ -177,7 +201,7 @@ function postCreate()
 	mid = new FlxSprite().loadGraphic(Paths.image("menus/story/mid"));
 	mid.antialiasing = true;
 	mid.updateHitbox();
-	mid.screenCenter(FlxAxes.XY);
+	mid.screenCenter();
 	//add(mid);
 
 	fade2 = new FlxSprite(0, -100);
@@ -185,7 +209,8 @@ function postCreate()
 	fade2.loadGraphic(Paths.image('menus/titlescreen/fade'));
 	fade2.blend = 1;
 	//image.setGraphicSize(FlxG.width * 1.4, FlxG.height * 1.4);
-	fade2.screenCenter(FlxAxes.X);
+	fade2.screenCenter();
+	fade2.y = -100;
 	fade2.alpha = 0.4;
 	fade2.updateHitbox();
 
@@ -212,20 +237,30 @@ function postCreate()
 		if(curSelected >= storyShit.length) curSelected = 0;
 		changeSelection(0,true);
 	});
+	
+	removeVirtualPad();
+	addVirtualPad("LEFT_RIGHT", "A_B");
+	controls.removeVirtualControlsInput(trackedinputsUI);
 }
 
-function update(elapsed:Float)
+function onCloseSubStatePost() {
+	removeVirtualPad();
+	addVirtualPad("LEFT_RIGHT", "A_B");
+	controls.removeVirtualControlsInput(trackedinputsUI);
+}
+
+function onUpdate(elapsed:Float)
 {
 	if (FlxG.keys.justPressed.R) {FlxG.resetState();}
 	if(FlxG.save.data.ShaderHigh)
 	{
     	bgShader.iTime = (time += elapsed);
 	}
-	if (controls.BACK && intro) 
+	if (_virtualpad.buttonB.justPressed && intro) 
 	{
 		if(!onside)
 		{
-			FlxG.switchState(new MainMenuState());
+			CustomSwitchState.switchMenus('MainMenu');
 		}
 		else
 		{
@@ -256,10 +291,10 @@ function update(elapsed:Float)
 			}
 		}
 	}
-	if (controls.LEFT_P && intro) {changeSelection(-1);}
-	if (controls.RIGHT_P && intro) {changeSelection(1);}
+	if (_virtualpad.buttonLeft.justPressed && intro) {changeSelection(-1);}
+	if (_virtualpad.buttonRight.justPressed && intro) {changeSelection(1);}
 
-	if (controls.ACCEPT && intro)
+	if (_virtualpad.buttonA.justPressed && intro)
 	{
 		if(!picknow)
 		{
@@ -319,14 +354,14 @@ function update(elapsed:Float)
 	}
 }
 
-function postUpdate(elapsed:Float)
+function onUpdatePost(elapsed:Float)
 {
 	if (FlxG.keys.pressed.J) desc.x -= 5;
 	if (FlxG.keys.pressed.L) desc.x += 5;
 	if (FlxG.keys.pressed.I) desc.y -= 5;
 	if (FlxG.keys.pressed.K) desc.y += 5;
 	if (FlxG.keys.pressed.O) trace(desc);
-	sideShader.iTime = (time += elapsed);
+	sideShader.hset("iTime", (time += elapsed));
 }
 
 function changeSelection(change:Int = 0, ?reset:Bool)
@@ -356,7 +391,7 @@ function changeSelection(change:Int = 0, ?reset:Bool)
 			}
 			else
 			{
-				tween = FlxTween.tween(sprite, {x: (FlxAxes.XY + sprite.ID * gap) - (curSelected * gap) + gap -45}, 0.2, {ease: FlxEase.expoOut}); // just redid it cus that looked like a mess sorry taeyai lol
+				tween = FlxTween.tween(sprite, {x: (0 + sprite.ID * gap) - (curSelected * gap) + gap -45}, 0.2, {ease: FlxEase.expoOut}); // just redid it cus that looked like a mess sorry taeyai lol
 			}
 		});
 		storyGroup.forEach(function(sprite:FlxSprite) {
@@ -377,29 +412,31 @@ function changeSelection(change:Int = 0, ?reset:Bool)
 			case 0:
 				chapter.text = chname[0];
 				desc.text = dname[0];
-				chapter.screenCenter(FlxAxes.X);
-				desc.screenCenter(FlxAxes.X);
+				chapter.screenCenter();
+				desc.screenCenter();
 			case 1:
 				chapter.text = chname[1];
 				desc.text = dname[1];
-				chapter.screenCenter(FlxAxes.X);
-				desc.screenCenter(FlxAxes.X);
+				chapter.screenCenter();
+				desc.screenCenter();
 			case 2:
 				chapter.text = chname[2];
 				desc.text = dname[2];
-				chapter.screenCenter(FlxAxes.X);
-				desc.screenCenter(FlxAxes.X);
+				chapter.screenCenter();
+				desc.screenCenter();
 			case 3:
 				chapter.text = chname[3];
 				desc.text = dname[3];
-				chapter.screenCenter(FlxAxes.X);
-				desc.screenCenter(FlxAxes.X);
+				chapter.screenCenter();
+				desc.screenCenter();
 			case 4:
 				chapter.text = chname[4];
 				desc.text = dname[4];
-				chapter.screenCenter(FlxAxes.X);
-				desc.screenCenter(FlxAxes.X);
+				chapter.screenCenter();
+				desc.screenCenter();
 		}
+		chapter.y = 9;
+		desc.y = 655;
 	}
 	else
 	{
@@ -463,24 +500,17 @@ function loadStory(songs:Array<String>)
 	trace(PlayState.storyPlaylist);
 	PlayState.isStoryMode = true;
 	PlayState.chartingMode = false;
-	PlayState.__loadSong(PlayState.storyPlaylist[0], 'regular');
+	__loadSong(PlayState.storyPlaylist[0], 3);
+
 	new FlxTimer().start(1, function(tmr:FlxTimer)
 	{
-		FlxG.switchState(new PlayState());
+		LoadingState.loadAndSwitchState(new PlayState());
 	});
 }
 
-
-//MAKE OG FUNCTION WON'T WORK!!!
-function changeWeek(event)
-{
-	event.cancelled = true;
-}
-function changeDifficulty(event)
-{
-	event.cancelled = true;
-}
-function selectWeek(event)
-{
-	event.cancelled = true;
+function __loadSong(name:String, difficulty:Int) {
+	PlayState.storyDifficulty = difficulty;
+	var songLowercase:String = Paths.formatToSongPath(name);
+	var poop:String = Highscore.formatSong(songLowercase, difficulty);
+	Song.loadFromJson(poop, songLowercase);
 }
