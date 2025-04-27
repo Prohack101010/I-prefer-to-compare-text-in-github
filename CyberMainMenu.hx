@@ -1,11 +1,24 @@
-import funkin.ui.FunkinText;
 import flixel.text.FlxTextBorderStyle;
 import haxe.io.Path;
 import flixel.effects.FlxFlicker;
-import funkin.options.OptionsMenu;
-import funkin.backend.MusicBeatState;
-import funkin.menus.credits.CreditsMain;
-import funkin.game.PlayState;
+import options.OptionsState;
+import MusicBeatState;
+import CreditsState;
+import PlayState;
+import flixel.addons.transition.FlxTransitionableState;
+import flixel.group.FlxTypedGroup;
+import options.OptionsState;
+import backend.Mods;
+import PlayState;
+import openfl.display.BitmapData;
+import openfl.utils.Assets;
+import MusicBeatState;
+import StoryMenuState;
+import FreeplayState;
+import Sys;
+import flixel.math.FlxMath;
+
+
 var o;
 var square:FlxSprite;
 var fade:FlxSprite;
@@ -21,25 +34,26 @@ var bglist:Array<String> = [
 var textGroups:FlxTypedGroup;
 var time:Float;
 var lang:String = '';
-function create() {
+function onCreate() {
 	o = optionShit;
 	optionShit = ["story mode", "freeplay", "options","extra","my channel", "credits"];
-	optionShitth = ["โหมดเนื้อเรื่อง", "ฟรีเพลย์", "ตั้งค่า","เพิ่มเติม", "เครดิต"];
-
 }
 function postCreate() {
 	remove(members[1]);
 	remove(members[4]);
+	//MotherFucker Texts in MainMenuState
+	members[5].destroy();
+	members[6].destroy();
+	members[7].destroy();
+
 	magenta.destroy();
 	remove(magenta);
 
-	optionShit = ["story mode", "freeplay", "options", "credits","extra","my channel"];
+	removeVirtualPad();
+	addVirtualPad("UP_DOWN", "A_B_X_Y");
+	addVirtualPadCamera();
 
-	for(i in menuItems) {
-		i.visible = false;
-		i.alpha = 0;
-		i.destroy();
-	}
+	optionShit = ["story mode", "freeplay", "options", "credits","extra","my channel"];
 
 	var randombg = bglist[FlxG.random.int(0, bglist.length-1)];
 	var image = new FlxSprite(0, -FlxG.height * 0.25);
@@ -48,7 +62,7 @@ function postCreate() {
 	image.loadGraphic(Paths.image('menus/mainmenu/art/' + randombg));
 	image.setGraphicSize(FlxG.width * 1.4, FlxG.height * 1.4);
 	image.updateHitbox();
-	image.screenCenter(FlxAxes.X);
+	image.screenCenter();
 	add(image);
 
 	fade = new FlxSprite();
@@ -71,8 +85,7 @@ function postCreate() {
 	textGroups = new FlxTypedGroup();
 	add(textGroups);
 
-	if(FlxG.save.data.thaiSub){o = optionShitth;}
-	else {o = optionShit;}
+	o = optionShit;
 
 	for(i2 in 0...o.length) {
 		var i = o.length - i2 - 1;
@@ -119,12 +132,16 @@ function postCreate() {
 	FlxG.cameras.add(transitionCamera, false);
 }
 
-function update(elapsed)
+function onUpdate(elapsed)
 {
+	FlxG.camera.follow(null, null, 1); //set null
 	if (controls.ACCEPT)
 	{
 		selectItem();
 	}
+	
+	if (_virtualpad.buttonX.justPressed) CustomSwitchState.switchMenus('MasterEditor');
+	if (_virtualpad.buttonY.justPressed) CustomSwitchState.switchMenus('ModsMenu');
 
 	if (controls.UP_P)
 		changeItem(-1);
@@ -132,14 +149,11 @@ function update(elapsed)
 		changeItem(1);
 }
 
-function postUpdate(elapsed:Float) {
+function onUpdatePost(elapsed:Float) {
 	time += elapsed;
 	for(m in menuItems)
 		m.x -= FlxG.width * 0.2;
 
-	if (FlxG.keys.justPressed.FOUR) {
-		FlxG.switchState(new ModState("PsychToCodename"));
-	}
 	if (FlxG.keys.justPressed.F5) {
 		FlxG.resetState();
 	}
@@ -148,7 +162,7 @@ function postUpdate(elapsed:Float) {
 	{
 		for(i in 0...texts.length) {
 			var t = texts[i];
-			t.t = lerp(t.t, (curSelected == i ? 1 : 0), 0.5);
+			t.t = FlxMath.lerp(t.t, (curSelected == i ? 1 : 0), 0.5);
 			t.bar.alpha = FlxEase.cubeOut(t.t);
 			t.bar.scale.set((t.t * t.text.width) - 4, 6);
 			t.bar.updateHitbox();
@@ -158,8 +172,8 @@ function postUpdate(elapsed:Float) {
 
 	if(!selectedSomethin)
 	{
-		square.x = lerp(square.x, texts[curSelected].text.x - 32, 0.5);
-		square.y = lerp(square.y, texts[curSelected].text.y + (texts[curSelected].text.height / 2) - 8, 0.5);
+		square.x = FlxMath.lerp(square.x, texts[curSelected].text.x - 32, 0.5);
+		square.y = FlxMath.lerp(square.y, texts[curSelected].text.y + (texts[curSelected].text.height / 2) - 8, 0.5);
 		square.angle += elapsed * 75;
 	}
 	else
@@ -206,52 +220,24 @@ function selectItem() {
 	{
 		switch (daChoice)
 		{
-			case 'story mode' | 'โหมดเนื้อเรื่อง':
+			case 'story mode':
 				FlxG.switchState(new StoryMenuState());
-				//FlxG.switchState(new StoryMenuState());
-				trace("Story Menu Selected");
-			case 'freeplay' | 'ฟรีเพลย์':
+			case 'freeplay':
 				FlxG.switchState(new FreeplayState());
-				//FlxG.switchState(new FreeplayState());
-				trace("Freeplay Menu Selected");
-			case 'credits' | 'เครดิต':
-				PlayState.storyWeek = 'credits';
-				PlayState.storyPlaylist = ["credits"];
-
-				trace(PlayState.storyPlaylist);
-				PlayState.isStoryMode = true;
-				PlayState.chartingMode = false;
-				PlayState.__loadSong(PlayState.storyPlaylist[0], 'credits');
-				new FlxTimer().start(1, function(tmr:FlxTimer)
-				{
-					FlxG.switchState(new PlayState());
-				});
-				/*
-				FlxG.switchState(new CreditsMain());
-				trace("Credits Main Selected");
-				*/
+			case 'credits':
+				FlxG.switchState(new CreditsState());
 			case 'extra':
-				FlxG.resetState();	
-				CoolUtil.openURL('https://drive.google.com/drive/folders/15-gk54nWrAZYGaCs3vHzcljNz146VMTO?usp=sharing');
+				FlxG.resetState();
+				CoolUtil.browserLoad('https://drive.google.com/drive/folders/15-gk54nWrAZYGaCs3vHzcljNz146VMTO?usp=sharing');
 			case 'my channel':
 				FlxG.resetState();	
-				CoolUtil.openURL('https://youtube.com/@KralOyuncuRBX');
-			case 'options' | 'ตั้งค่า':
-				FlxG.switchState(new OptionsMenu());
+				CoolUtil.browserLoad('https://youtube.com/@KralOyuncuRBX');
+			case 'options':
+				FlxG.switchState(new OptionsState());
 				trace("Options Menu Selected");
-			case 'back' | 'กลับ':
+			case 'back':
 				FlxG.switchState(new TitleState());
 				trace("Back Selected");
 		}
 	});
-}
-
-//TURN OFF OLD FUNCTION
-function onSelectItem(event)
-{
-	event.cancelled = true;
-}
-function onChangeItem(event)
-{
-	event.cancelled = true;
 }
