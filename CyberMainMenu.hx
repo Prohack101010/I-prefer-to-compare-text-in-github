@@ -221,11 +221,11 @@ function selectItem() {
 		switch (daChoice)
 		{
 			case 'story mode':
-				FlxG.switchState(new StoryMenuState());
+				CustomSwitchState.switchMenus('StoryMenu');
 			case 'freeplay':
-				FlxG.switchState(new FreeplayState());
+				CustomSwitchState.switchMenus('Freeplay');
 			case 'credits':
-				FlxG.switchState(new CreditsState());
+				CustomSwitchState.switchMenus('Credits');
 			case 'extra':
 				FlxG.resetState();
 				CoolUtil.browserLoad('https://drive.google.com/drive/folders/15-gk54nWrAZYGaCs3vHzcljNz146VMTO?usp=sharing');
@@ -236,7 +236,7 @@ function selectItem() {
 				FlxG.switchState(new OptionsState());
 				trace("Options Menu Selected");
 			case 'back':
-				FlxG.switchState(new TitleState());
+				CustomSwitchState.switchMenus('Title');
 				trace("Back Selected");
 		}
 	});
