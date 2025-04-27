@@ -35,8 +35,6 @@ function postCreate()
 		i.alpha = 0;
 		remove(i);
 	}
-	removeVirtualPad();
-	addVirtualPad("NONE", "B");
 	levelInfo = new FunkinText(130, -10, 0, 'GO', 32);
 	username = new FunkinText(1080, 100, 0, Sys.getEnv("USERNAME"), 22);
 	welcome = new FunkinText(960, 100, 0, "Welcome Back", 22);
@@ -47,6 +45,7 @@ function postCreate()
 	members[2].destroy();
 	members[3].destroy();
 	members[4].destroy();
+	members[5].destroy();
 	optionGroup = new FlxTypedGroup();
 	image = new FlxSprite(0, 0);
 	image.antialiasing = true;
@@ -101,13 +100,13 @@ function postCreate()
 		imgss.cameras = [camPause];
 		imgss.ID = i;
 		if(imgss.ID == 0) {
-			imgss.screenCenter(); 
-			imgss.y = 769;  
+			imgss.screenCenter();
+			imgss.y = 769;
 		} //512.5 232.5
 		if(imgss.ID == 1) {
 			imgss.offset.set(-200,78);
 			imgss.setPosition(-107 ,563);
-		}//200 247  
+		}//200 247
 		if(imgss.ID == 2) {
 			imgss.offset.set(207,79);
 			imgss.setPosition(1074,551); 
@@ -133,6 +132,10 @@ function postCreate()
 		});
 	}
 	floating();
+
+	removeVirtualPad();
+	addVirtualPad("NONE", "B");
+	addVirtualPadCamera();
 }
 
 function particle(x:Float, y:Float)
