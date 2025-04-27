@@ -1,8 +1,29 @@
-import funkin.options.OptionsMenu;
-import funkin.backend.MusicBeatState;
-import funkin.savedata.FunkinSave;
+import options.OptionsState;
+import MusicBeatState;
+import flixel.text.FlxTextBorderStyle;
+import haxe.io.Path;
+import flixel.effects.FlxFlicker;
+import options.OptionsState;
+import MusicBeatState;
+import CreditsState;
+import PlayState;
+import flixel.addons.transition.FlxTransitionableState;
+import flixel.group.FlxTypedGroup;
+import options.OptionsState;
+import backend.Mods;
+import PlayState;
+import openfl.display.BitmapData;
+import openfl.utils.Assets;
+import MusicBeatState;
+import StoryMenuState;
+import FreeplayState;
+import Sys;
+import flixel.math.FlxMath;
+import HealthIcon;
+import Difficulty;
+
+
 var virusSpookyPath:String;
-var virusShader:CustomShader;
 var diff:Float = 0;
 var time:Float = 0;
 
@@ -32,8 +53,9 @@ var shaSong = ["Virus","Malware","Crowd Control", "Errorians", "Our Hope"];
 
 //Background
 
-function create()
+function onCreate()
 {
+	_virtualpad.cameras = [FlxG.cameras.list[FlxG.cameras.list.length-1]];
 	//PRELOAD
 
 	for (i in 0...songs.length)
@@ -44,53 +66,21 @@ function create()
 		// FlxG.sound.cache(curPlayingInstt);
 		// curPlayingInstt = null;
 	}
-
-	for(k=>s in songs) {
-		if (s.name == Options.freeplayLastSong) {
-			curSelected = k;
-		}
-	}
-	if (songs[curSelected] != null) {
-		for(k=>diff in songs[curSelected].difficulties) {
-			if (diff == Options.freeplayLastDifficulty) {
-				curDifficulty = k;
-			}
-		}
-	}
 }
 function postCreate() {
 	remove(members[1]);
-	virusShader = new CustomShader('glitch');
+	remove(members[3]);
 	virusSpookyPath = Paths.getPath("songs/virus/song/her.ogg");
 
-	FlxG.camera.addShader(virusShader);
-
 	//BG
-	members[0].visible = false;
+	members[2].visible = false;
 	bglol = new FlxSprite(-800, -800);
 	bglol.makeGraphic(FlxG.width, FlxG.height, 0xFF616161);
 	bglol.scrollFactor.set(0, 0);
-	bglol.screenCenter(FlxAxes.XY);
+	bglol.screenCenter();
 	bgShader = new CustomShader('bgMenu');
 	bglol.shader = bgShader;
 	add(bglol);
-
-	//Song
-	for(i in 0...grpSongs.members.length) 
-	{
-		if(grpSongs.members[i]!=null) grpSongs.members[i].destroy();
-		grpSongs.remove(grpSongs.members[i]);
-	}
-	for(i in 0...iconArray.length) 
-	{
-		if(iconArray[i]!=null) iconArray[i].destroy();
-		remove(iconArray[i], true);
-	}
-
-	grpSongs.clear();
-	iconArray = [];
-
-	remove(interpColor);
 
 	grpSongBars = new FlxTypedGroup();
 	add(grpSongBars);
@@ -104,9 +94,11 @@ function postCreate() {
 	grpArt = new FlxTypedGroup();
 	add(grpArt);
 
+	_virtualpad.cameras = [FlxG.cameras.list[FlxG.cameras.list.length-1]];
+
 	for (i in 0...songs.length)
 	{
-		songText = new FunkinText(983.12, (0 * i) + 30,0, songs[i].displayName, 42);
+		songText = new FunkinText(983.12, (0 * i) + 30,0, songs[i].songName, 42);
 		songText.alignment = 'RIGHT';
 		songText.font = Paths.font('freeplay.ttf');
 		songText.y = i * 129;
@@ -127,7 +119,8 @@ function postCreate() {
 		grpSongBars.add(songbar);
 		grpSongsText.add(songText);
 
-		icon = new HealthIcon(songs[i].icon);
+		Mods.currentModDirectory = songs[i].folder;
+		icon = new HealthIcon(songs[i].songCharacter);
 		icon.x = songText.x - 130;
 		icon.scale.set(0.6,0.6);
 		icon.y = songText.y - 54;
@@ -164,53 +157,26 @@ function postCreate() {
 	overlay.updateHitbox();
 	add(overlay);
 
-	for(i in 0...songs.length)
-		if (songs[i].name == "virus") {
-			virusIndex = i;
-			break;
-		}
-
-	if (virusLocked) {
-		for(a in grpSongsText.members[virusIndex].members) {
-			var indexes = [for (i in 0...a.frames.frames.length) i];
-			var sortedIndexes = [];
-			while(indexes.length > 0) {
-				var i = indexes[FlxG.random.int(0, indexes.length-1)];
-				sortedIndexes.push(i);
-				indexes.remove(i);
-			}
-			a.animation.add("glitch", sortedIndexes, 24, true);
-			a.animation.play("glitch");
-		}
-
-		iconArray[virusIndex].color = 0xFF000000;
-		var tr = iconArray[virusIndex].colorTransform;
-		tr.redMultiplier = tr.greenMultiplier = tr.blueMultiplier = 0;
-		tr.redOffset = tr.greenOffset = tr.blueOffset = 255;
-		tr.alphaMultiplier = 0.5;
-		iconArray[virusIndex].blend = 1;
-	}
-
-	funText = new FunkinText(10,10, songs[curSelected].displayName, 62);
+	funText = new FunkinText(10,10, songs[curSelected].songName, 62);
 	funText.alignment = 'RIGHT';
 	funText.font = Paths.font('freeplay.ttf');
-	funText.text = songs[curSelected].displayName + " - " + songs[curSelected].difficulties[curDifficulty] + " - " + songs[curSelected].composer;
+	funText.text = songs[curSelected].songName + " - " + Difficulty.getString(curDifficulty) + " - " + "Ported by KralOyuncu";
 	funText.size = 42;
 	funText.antialiasing = true;
 	add(funText);
 
-	comText = new FunkinText(10,53, songs[curSelected].displayName, 62);
+	comText = new FunkinText(10,53, songs[curSelected].songName, 62);
 	comText.alignment = 'RIGHT';
 	comText.font = Paths.font('freeplay.ttf');
-	comText.text = songs[curSelected].composer;
+	comText.text = "Ported by KralOyuncu";
 	comText.size = 32;
 	comText.antialiasing = true;
 	add(comText);
 
-	scText = new FunkinText(10,FlxG.height - 46, songs[curSelected].displayName, 62);
+	scText = new FunkinText(10,FlxG.height - 46, songs[curSelected].songName, 62);
 	scText.alignment = 'LEFT';
 	scText.font = Paths.font('freeplay.ttf');
-	scText.text = songs[curSelected].composer;
+	scText.text = "Ported by KralOyuncu";
 	scText.size = 32;
 	scText.antialiasing = true;
 	add(scText);
@@ -221,77 +187,36 @@ function postCreate() {
 
 	changeItem(0, true);
 	changedaDiff(0,true);
-	scoreBG.visible = diffText.visible = false;
 }
 
+var checkLastHold:Int;
+var checkNewHold:Int;
 
-
-
-
-
-
-function postUpdate()
-{
-	/*if (FlxG.keys.pressed.J) diffText2.x -= 5;
-	if (FlxG.keys.pressed.L) diffText2.x += 5;
-	if (FlxG.keys.pressed.I) diffText2.y -= 5;
-	if (FlxG.keys.pressed.K) diffText2.y += 5;
-	if (FlxG.keys.pressed.O) trace(diffText2);*/
+function onUpdate(elapsed:Float) {
+	if((controls.UI_DOWN || controls.UI_UP) && !(controls.UI_UP_P || controls.UI_DOWN_P)) checkLastHold = Math.floor((holdTime - 0.5) * 10);
+	_virtualpad.cameras = [FlxG.cameras.list[FlxG.cameras.list.length-1]];
+	player.cameras = [FlxG.cameras.list[FlxG.cameras.list.length-1]];
 }
 
-//Song Preview
-/**
- * Time elapsed since last autoplay. If this time exceeds `timeUntilAutoplay`, the currently selected song will play.
- */
-public var autoplayElapsedd:Float = 0;
-/**
- * Whenever the currently selected song instrumental is playing.
- */
-public var songInstPlayingg:Bool = true;
-/**
- * Path to the currently playing song instrumental.
- */
-public var curPlayingInstt:String = null;
-function update(elapsed:Float) {
-	if (!selected) {
-		if(FlxG.mouse.wheel != 0)
-		{
-			changeItem(-1 * FlxG.mouse.wheel);
-		}
-		changeItem((controls.UP_P ? -1 : 0) + (controls.DOWN_P ? 1 : 0));
-		changedaDiff((controls.LEFT_P ? -1 : 0) + (controls.RIGHT_P ? 1 : 0));
-		changeCoopMode((FlxG.keys.justPressed.TAB ? 1 : 0));
-	}
-	var dontPlaySongThisFrame = false;
-
-	autoplayElapsedd += elapsed;
-
-	//trace(autoplayElapsedd);
-	if (!songInstPlayingg && (autoplayElapsedd > timeUntilAutoplay || FlxG.keys.justPressed.SPACE)) {
-		if (curPlayingInstt != (curPlayingInstt = Paths.inst(songs[curSelected].name, songs[curSelected].difficulties[curDifficulty])))
-			FlxG.sound.playMusic(curPlayingInstt, 0);
-		songInstPlayingg = true;
-		dontPlaySongThisFrame = true;
+function onUpdatePost(elapsed:Float) {
+	for (i in _lastVisibles) {
+		iconArray[i].visible = false;
+		iconArray[i].active = false;
 	}
 
-	if (controls.ACCEPT && !dontPlaySongThisFrame)
+	if (controls.UI_LEFT_P || controls.UI_RIGHT_P) changedaDiff(0, true);
+	if (controls.UI_UP_P || controls.UI_DOWN_P) changeItem(0, true);
+	
+	if((controls.UI_DOWN || controls.UI_UP) && !(controls.UI_UP_P || controls.UI_DOWN_P))
 	{
-		selectSong();
+		checkNewHold = Math.floor((holdTime - 0.5) * 10);
+
+		if(holdTime > 0.5 && checkNewHold - checkLastHold > 0)
+			changeItem(0, true);
 	}
 
-	if (FlxG.keys.justPressed.B)
-	{
-		FlxG.switchState(new MainMenuState());
-	}
-
-
-	virusShader.iTime = (time += elapsed);
-	bgShader.iTime = (time += elapsed);
-
-	lerpScore = Math.floor(lerp(lerpScore, intendedScore, 0.4));
-
-	if (Math.abs(lerpScore - intendedScore) <= 10)
-		lerpScore = intendedScore;
+	time += elapsed;
+	bgShader.hset("iTime", time);
 
 	scText.text = "PERSONAL BEST: " + lerpScore;
 }
@@ -299,8 +224,7 @@ function update(elapsed:Float) {
 function changeItem(change:Int = 0, force:Bool = false)
 {
 	if (change == 0 && !force) return;
-	var value = FlxMath.wrap(curSelected + change, 0, songs.length-1);
-	curSelected = value;
+	curSelected = state.curSelected;
 	FlxG.sound.play(Paths.sound('menu/scroll'), 0.7);
 
 	changedaDiff(0,true);
@@ -366,37 +290,33 @@ function changeItem(change:Int = 0, force:Bool = false)
 
 	autoplayElapsedd = 0;
 	songInstPlayingg = false;
-	coopText.visible = songs[curSelected].coopAllowed || songs[curSelected].opponentModeAllowed;
 
-	funText.text = songs[curSelected].displayName + " - " + songs[curSelected].difficulties[curDifficulty];
+	funText.text = songs[curSelected].songName + " - " + Difficulty.getString(curDifficulty);
 	updateScore();
-	comText.text = songs[curSelected].composer;
+	comText.text = "Ported by KralOyuncu";
 }
 
-public function changedaDiff(change:Int = 0, force:Bool = false)
+function changedaDiff(change:Int = 0, force:Bool = false)
 {
 	if (change == 0 && !force) return;
 
 	var curSong = songs[curSelected];
-	var validDifficulties = curSong.difficulties.length > 0;
+	var validDifficulties = Difficulty.list.length > 0;
 
-	var value = FlxMath.wrap(curDifficulty + change, 0, curSong.difficulties.length-1);
+	var value = FlxMath.wrap(curDifficulty + change, 0, Difficulty.list.length-1);
 	curDifficulty = value;
 
-	updateScore();
-
-	if (curSong.difficulties.length > 1)
-		diffText2.text = '< '+ curSong.difficulties[curDifficulty]+' >';
+	if (Difficulty.list.length > 1)
+		diffText2.text = '< '+ Difficulty.getString(curDifficulty) +' >';
 	else
-		diffText2.text = validDifficulties ? curSong.difficulties[curDifficulty] : "-";
+		diffText2.text = validDifficulties ? Difficulty.getString(curDifficulty) : "-";
 
-	funText.text = songs[curSelected].displayName + " - " + songs[curSelected].difficulties[curDifficulty];
-	}
-
+	funText.text = songs[curSelected].songName + " - " + Difficulty.getString(curDifficulty);
+}
 
 function changeArt()
 {
-	var curSong = songs[curSelected].displayName;
+	var curSong = songs[curSelected].songName;
 
 	switch(curSong)
 	{
@@ -520,44 +440,4 @@ function changeArt()
 				}
 		});
 	}
-}
-
-public function selectSong() {
-	updateCoopModes();
-
-	if (songs[curSelected].difficulties.length <= 0) return;
-	Options.freeplayLastSong = songs[curSelected].name;
-	Options.freeplayLastDifficulty = songs[curSelected].difficulties[curDifficulty];
-
-	PlayState.loadSong(songs[curSelected].name, songs[curSelected].difficulties[curDifficulty],__opponentMode, __coopMode);
-	FlxG.switchState(new PlayState());
-	//FlxG.switchState(new PlayState());
-}
-
-function updateScore() {
-	if (songs[curSelected].difficulties.length <= 0) {
-		intendedScore = 0;
-		return;
-	}
-	var changes:Array<HighscoreChange> = [];
-	var saveData = FunkinSave.getSongHighscore(songs[curSelected].name, songs[curSelected].difficulties[curDifficulty], changes);
-	intendedScore = saveData.score;
-}
-
-//TURN OFF OLD FUNCTION
-function onChangeDiff(event)
-{
-	event.cancelled = true;
-}
-function onChangeSelection(event)
-{
-	event.cancelled = true;
-}
-function onUpdateOptionsAlpha(event)
-{
-	event.cancelled = true;
-}
-function onSelect(event)
-{
-	event.cancelled = true;
 }
