@@ -3,6 +3,7 @@ import MusicBeatState;
 import flixel.text.FlxTextBorderStyle;
 import haxe.io.Path;
 import flixel.effects.FlxFlicker;
+import MusicPlayer;
 import options.OptionsState;
 import MusicBeatState;
 import CreditsState;
@@ -43,7 +44,7 @@ var grpIcon:FlxTypedGroup;
 
 //ART
 var grpArt:FlxTypedGroup;
-var artname = ["mayhem","sha", "ct","old","def","soft","tans","dust","hope"];
+var artname = ["mayhem","sha", "ct","old","def","soft","tans","dust","hope", "gacha"];
 var artcover:FlxSprite;
 
 //SONG CHECK
