@@ -1,4 +1,4 @@
-package editors;
+package states.editors;
 
 import flixel.FlxObject;
 import flixel.graphics.FlxGraphic;
@@ -16,8 +16,9 @@ import openfl.events.IOErrorEvent;
 import openfl.utils.Assets;
 import lime.system.Clipboard;
 
-import Character;
-import HealthIcon;
+import objects.Character;
+import objects.HealthIcon;
+import objects.Bar;
 
 class CharacterEditorState extends MusicBeatState
 {
@@ -37,7 +38,7 @@ class CharacterEditorState extends MusicBeatState
 	var cameraZoomText:FlxText;
 	var frameAdvanceText:FlxText;
 
-	var healthBar:FlxSprite;
+	var healthBar:Bar;
 	var healthIcon:HealthIcon;
 
 	var copiedOffset:Array<Float> = [0, 0];
@@ -65,6 +66,8 @@ class CharacterEditorState extends MusicBeatState
 
 	override function create()
 	{
+		if(ClientPrefs.data.cacheOnGPU) Paths.clearStoredMemory();
+
 		FlxG.sound.music.stop();
 		camEditor = initPsychCamera();
 
@@ -104,12 +107,12 @@ class CharacterEditorState extends MusicBeatState
 		cameraFollowPointer.updateHitbox();
 		add(cameraFollowPointer);
 
-		healthBar = new FlxSprite(30, FlxG.height - 75).loadGraphic(Paths.image('healthBar'));
+		healthBar = new Bar(30, FlxG.height - 75);
 		healthBar.scrollFactor.set();
 		add(healthBar);
 		healthBar.cameras = [camHUD];
 
-		healthIcon = new HealthIcon(character.healthIcon, false);
+		healthIcon = new HealthIcon(character.healthIcon, false, false);
 		healthIcon.y = FlxG.height - 150;
 		add(healthIcon);
 		healthIcon.cameras = [camHUD];
@@ -151,6 +154,8 @@ class CharacterEditorState extends MusicBeatState
 		updatePointerPos();
 		updateHealthBar();
 		character.finishAnimation();
+
+		if(ClientPrefs.data.cacheOnGPU) Paths.clearUnusedMemory();
 
 		super.create();
 	}
@@ -633,7 +638,6 @@ class CharacterEditorState extends MusicBeatState
 			});
 
 		healthIconInputText = new FlxUIInputText(15, imageInputText.y + 35, 75, healthIcon.getCharacter(), 8);
-		healthIconInputText.focusGained = () -> FlxG.stage.window.textInputEnabled = true;
 
 		vocalsInputText = new FlxUIInputText(15, healthIconInputText.y + 35, 75, character.vocalsFile != null ? character.vocalsFile : '', 8);
 
@@ -708,7 +712,7 @@ class CharacterEditorState extends MusicBeatState
 		{
 			if(sender == healthIconInputText) {
 				var lastIcon = healthIcon.getCharacter();
-				healthIcon.changeIcon(healthIconInputText.text);
+				healthIcon.changeIcon(healthIconInputText.text, false);
 				character.healthIcon = healthIconInputText.text;
 				if(lastIcon != healthIcon.getCharacter()) updatePresence();
 			}
@@ -1030,7 +1034,7 @@ class CharacterEditorState extends MusicBeatState
 			FlxG.mouse.visible = false;
 			if(!_goToPlayState)
 			{
-				MusicBeatState.switchState(new editors.MasterEditorMenu());
+				MusicBeatState.switchState(new states.editors.MasterEditorMenu());
 				FlxG.sound.playMusic(Paths.music('freakyMenu'));
 			}
 			else MusicBeatState.switchState(new PlayState());
@@ -1091,8 +1095,8 @@ class CharacterEditorState extends MusicBeatState
 		healthColorStepperR.value = character.healthColorArray[0];
 		healthColorStepperG.value = character.healthColorArray[1];
 		healthColorStepperB.value = character.healthColorArray[2];
-		healthBar.color = FlxColor.fromRGB(character.healthColorArray[0], character.healthColorArray[1], character.healthColorArray[2]);
-		healthIcon.changeIcon(character.healthIcon);
+		healthBar.leftBar.color = healthBar.rightBar.color = FlxColor.fromRGB(character.healthColorArray[0], character.healthColorArray[1], character.healthColorArray[2]);
+		healthIcon.changeIcon(character.healthIcon, false);
 		updatePresence();
 	}
 
