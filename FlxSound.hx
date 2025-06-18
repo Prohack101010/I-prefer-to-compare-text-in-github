@@ -1,7 +1,7 @@
 package flixel.system;
 
-import flash.events.Event;
 import flash.events.IEventDispatcher;
+import flash.events.Event;
 import flash.media.Sound;
 import flash.media.SoundChannel;
 import flash.media.SoundTransform;
@@ -94,10 +94,12 @@ class FlxSound extends FlxBasic
 	 */
 	public var volume(get, set):Float;
 
+	#if (sys && openfl_legacy)
 	/**
 	 * Set pitch, which also alters the playback speed. Default is 1.
 	 */
 	public var pitch(get, set):Float;
+	#end
 
 	/**
 	 * The position in runtime of the music playback in milliseconds.
@@ -176,10 +178,12 @@ class FlxSound extends FlxBasic
 	 */
 	var _length:Float = 0;
 
+	#if (sys && openfl_legacy)
 	/**
 	 * Internal tracker for pitch.
 	 */
 	var _pitch:Float = 1.0;
+	#end
 
 	/**
 	 * Internal tracker for total volume adjustment.
@@ -228,7 +232,6 @@ class FlxSound extends FlxBasic
 		_time = 0;
 		_paused = false;
 		_volume = 1.0;
-		_pitch = 1.0;
 		_volumeAdjust = 1.0;
 		looped = false;
 		loopTime = 0.0;
@@ -590,19 +593,7 @@ class FlxSound extends FlxBasic
 			(group != null ? group.volume : 1) * _volume * _volumeAdjust;
 
 		if (_channel != null)
-		{
 			_channel.soundTransform = _transform;
-
-			@:privateAccess
-			if(_channel.__source != null)
-			{
-				#if cpp
-				@:privateAccess
-				this._channel.__source.__backend.setPitch(_pitch);
-				// trace('changing $name pitch new $_pitch');
-				#end
-			}
-		}
 	}
 
 	/**
@@ -746,6 +737,7 @@ class FlxSound extends FlxBasic
 		return Volume;
 	}
 
+	#if (sys && openfl_legacy)
 	inline function get_pitch():Float
 	{
 		return _pitch;
@@ -753,8 +745,11 @@ class FlxSound extends FlxBasic
 
 	function set_pitch(v:Float):Float
 	{
+		if (_channel != null)
+			_channel.pitch = v;
 		return _pitch = v;
 	}
+	#end
 
 	inline function get_pan():Float
 	{
@@ -792,8 +787,7 @@ class FlxSound extends FlxBasic
 			LabelValuePair.weak("playing", playing),
 			LabelValuePair.weak("time", time),
 			LabelValuePair.weak("length", length),
-			LabelValuePair.weak("volume", volume),
-			LabelValuePair.weak("pitch", pitch)
+			LabelValuePair.weak("volume", volume)
 		]);
 	}
 }
